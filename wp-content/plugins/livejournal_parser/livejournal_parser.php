@@ -35,15 +35,15 @@ function livejournal_add_admin_menu(){
 
 function livejournal_add_admin_pages(){
 
-	if(isset($_POST['send_form_livejournal'])){
-		add_new_livejournal_blog();
-	}
 	admin_parser_livejournal_page();
-	show_all_livejournal_blog();
 }
 
 function admin_parser_livejournal_page(){
 	global $wpdb;
+	if(isset($_REQUEST['send_form_livejournal'])){
+		add_new_livejournal_blog();
+	}
+
 	echo '<h2>Сайты для парсинга</h2>';
 	if($_GET['parsing'] == 'start'){
 		set_time_limit(0);
@@ -62,7 +62,7 @@ function admin_parser_livejournal_page(){
 	}
 
 	echo '<h3>Добавить сайт для парсинга:</h3>';
-	echo '<form name="add_new_livejournal_blog" method="POST" action="'.$_SERVER['PHP_SELF'].'?page=livejournal_parser&update=true">';
+	echo '<form method="POST" action="'.$_SERVER['PHP_SELF'].'?page=livejournal_parser&update=true">';
 	echo '<table>
 	             <tr>
 	             <td style="text-align: right">URL блога</td>
@@ -77,7 +77,7 @@ function admin_parser_livejournal_page(){
 	      </table>';
 	echo '</form>';
 
-
+	show_all_livejournal_blog();
 }
 
 function add_new_livejournal_blog(){
@@ -93,7 +93,7 @@ function add_new_livejournal_blog(){
 
 function show_all_livejournal_blog(){
 	global $wpdb;
-	$blogs = $wpdb->get_results('SELECT * FROM ' . $wpdb->prefix . TABLE_LJ_PARSER);
+	$blogs = $wpdb->get_results('SELECT * FROM ' . $wpdb->prefix . TABLE_LJ_PARSER, OBJECT_K );
 	foreach($blogs as $blog){
 		echo '<table>
 		<tr>
