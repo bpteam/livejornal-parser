@@ -45,20 +45,20 @@ function admin_parser_livejournal_page(){
 	}
 
 	echo '<h2>Сайты для парсинга</h2>';
-	if($_GET['parsing'] == 'start'){
+	if($_REQUEST['parsing'] == 'start'){
 		set_time_limit(0);
 		echo '<h1>Выполняется парсинг, пожалуйста подождите...</h1>';
 		ob_flush();
 		flush();
 		ob_flush();
-		$blogs = $wpdb->get_results('SELECT * FROM ' . $wpdb->prefix . TABLE_LJ_PARSER . ' WHERE id='.$_POST['id']);
+		$blogs = $wpdb->get_results('SELECT * FROM ' . $wpdb->prefix . TABLE_LJ_PARSER . ' WHERE id='.$_REQUEST['id']);
 		foreach($blogs as $blog){
 			parsing_livejournal($blog['livejournal_url']);
 		}
 
 	}
-	if($_GET['parsing'] == 'del'){
-		$wpdb->query('DELETE FROM ' . $wpdb->prefix . TABLE_LJ_PARSER . ' WHERE id='.$_POST['id']);
+	if($_REQUEST['parsing'] == 'del'){
+		$wpdb->query('DELETE FROM ' . $wpdb->prefix . TABLE_LJ_PARSER . ' WHERE id='.$_REQUEST['id']);
 	}
 
 	echo '<h3>Добавить сайт для парсинга:</h3>';
@@ -93,7 +93,7 @@ function add_new_livejournal_blog(){
 
 function show_all_livejournal_blog(){
 	global $wpdb;
-	$blogs = $wpdb->get_results('SELECT * FROM ' . $wpdb->prefix . TABLE_LJ_PARSER, OBJECT_K );
+	$blogs = $wpdb->get_results('SELECT * FROM ' . $wpdb->prefix . TABLE_LJ_PARSER, ARRAY_A);
 	foreach($blogs as $blog){
 		echo '<table>
 		<tr>
@@ -106,7 +106,24 @@ function show_all_livejournal_blog(){
 }
 
 function parsing_livejournal($url){
-
+	$lj = new \Parser\cLiveJournal();
+	$ljPoster = new \Poster\cWordPressLocal();
+	$lj->init($url);
+	$ljPoster->addUser($lj->getJournal(),$lj->getJournal().'123456','Author');
+	$lj->setAuthorId($lj->getAuthorId());
+	do{
+		$page = current($lj->curl->load($url));
+		$links = $lj->getLinks($page);
+		if($links){
+			foreach($links as $link){
+				$page = current($lj->curl->load($link));
+				$lj->parsArticle($page);
+				$ljPoster->addPost($lj->getTitle(), $lj->getPost(), $lj->getAuthorId(), null, $lj->getPostId());
+			}
+		} else {
+			break;
+		}
+	}while(true);
 }
 
 add_action('admin_page', 'livejournal_add_admin_pages');

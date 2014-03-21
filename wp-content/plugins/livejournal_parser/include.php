@@ -9,5 +9,5 @@
  */
 
 require_once(dirname(__FILE__).'/../../../../loader-curl-phantomjs-proxy/include.php');
-require_once(dirname(__FILE__).'/../../../../parser-ad/include.php');
+require_once(dirname(__FILE__).'/../../../../parser/include.php');
 require_once(dirname(__FILE__).'/../../../../poster/include.php');
