@@ -51,7 +51,7 @@ function admin_parser_livejournal_page(){
 		ob_flush();
 		flush();
 		ob_flush();
-		$blogs = $wpdb->get_results('SELECT * FROM ' . $wpdb->prefix . TABLE_LJ_PARSER . ' WHERE id='.$_REQUEST['id']);
+		$blogs = $wpdb->get_results('SELECT * FROM ' . $wpdb->prefix . TABLE_LJ_PARSER . ' WHERE id='.$_REQUEST['id'], ARRAY_A);
 		foreach($blogs as $blog){
 			parsing_livejournal($blog['livejournal_url']);
 		}
@@ -109,8 +109,6 @@ function parsing_livejournal($url){
 	$lj = new \Parser\cLiveJournal();
 	$ljPoster = new \Poster\cWordPressLocal();
 	$lj->init($url);
-	$ljPoster->addUser($lj->getJournal(),$lj->getJournal().'123456','Author');
-	$lj->setAuthorId($lj->getAuthorId());
 	do{
 		$page = current($lj->curl->load($url));
 		$links = $lj->getLinks($page);
@@ -118,6 +116,7 @@ function parsing_livejournal($url){
 			foreach($links as $link){
 				$page = current($lj->curl->load($link));
 				$lj->parsArticle($page);
+				$ljPoster->addUser($lj->getJournal(),$lj->getJournal().'123456','Author', $lj->getAuthorId());
 				$ljPoster->addPost($lj->getTitle(), $lj->getPost(), $lj->getAuthorId(), null, $lj->getPostId());
 			}
 		} else {
