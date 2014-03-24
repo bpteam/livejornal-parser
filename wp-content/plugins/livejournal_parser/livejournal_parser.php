@@ -67,12 +67,8 @@ function admin_parser_livejournal_page(){
 	             <tr>
 	             <td style="text-align: right">URL блога</td>
 	             <td><input type="text" name="livejournal_url"></td>
+	             <td><input type="submit" name="send_form_livejournal" value="Добавить"></td>
 	             <td style="color: #666666">Пример: <i>http://jeytim.livejournal.com/</i></td>
-	             </tr>
-	             <tr>
-	             <td></td>
-	             <td style="text-align: center;"><input type="submit" name="send_form_livejournal" value="Добавить"></td>
-	             <td></td>
 	             </tr>
 	      </table>';
 	echo '</form>';
@@ -117,7 +113,11 @@ function parsing_livejournal($url){
 				$page = current($lj->curl->load($link));
 				$lj->parsArticle($page);
 				$ljPoster->addUser($lj->getJournal(),$lj->getJournal().'123456','Author', $lj->getAuthorId());
-				$ljPoster->addPost($lj->getTitle(), $lj->getPost(), $lj->getAuthorId(), null, $lj->getPostId());
+				$post = $lj->getPost();
+				$ljPoster->downloadPictures($post);
+				$ljPoster->addPost($lj->getTitle(), $post, $lj->getAuthorId(), null, $lj->getPostId());
+				$ljPoster->addTagsToPost($lj->getPostId(), $lj->getTag());
+				$ljPoster->addCommentsToPost($lj->getPostId(), $lj->getComments());
 			}
 		} else {
 			break;
