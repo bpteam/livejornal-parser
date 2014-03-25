@@ -106,8 +106,8 @@ function parsing_livejournal($url){
 	$ljPoster = new \Poster\cWordPressLocal();
 	$lj->init($url);
 	do{
-		$page = current($lj->curl->load($url));
-		$links = $lj->getLinks($page);
+		$pageLinks = current($lj->curl->load($url));
+		$links = $lj->getLinks($pageLinks);
 		if($links){
 			foreach($links as $link){
 				$page = current($lj->curl->load($link));
@@ -119,10 +119,9 @@ function parsing_livejournal($url){
 				$ljPoster->addTagsToPost($lj->getPostId(), $lj->getTag());
 				$ljPoster->addCommentsToPost($lj->getPostId(), $lj->getComments());
 			}
-		} else {
-			break;
 		}
-	}while(true);
+		$url = $lj->nextPage($pageLinks);
+	}while($url);
 }
 
 add_action('admin_page', 'livejournal_add_admin_pages');
