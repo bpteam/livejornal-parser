@@ -115,9 +115,10 @@ function parsing_livejournal($url){
 				$ljPoster->addUser($lj->getJournal(),$lj->getJournal().'123456','Author', $lj->getAuthorId());
 				$post = $lj->getPost();
 				$ljPoster->downloadPictures($post);
-				$ljPoster->addPost($lj->getTitle(), $post, $lj->getAuthorId(), null, $lj->getPostId());
+				$ljPoster->addPost($lj->getTitle(), $post, $lj->getAuthorId(), array('post_date' => date('Y-m-d H:i:s',$lj->getPublicTimestamp())), $lj->getPostId());
 				$ljPoster->addTagsToPost($lj->getPostId(), $lj->getTag());
 				$ljPoster->addCommentsToPost($lj->getPostId(), $lj->getComments());
+				sleep(1);
 			}
 		}
 		$url = $lj->nextPage($pageLinks);
