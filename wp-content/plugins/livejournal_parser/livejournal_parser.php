@@ -124,7 +124,7 @@ function parsing_livejournal($url, $update = false){
 					$ljPoster->addPost($lj->getTitle(), $post, $lj->getAuthorId(), array('post_date' => date('Y-m-d H:i:s',$lj->getPublicTimestamp())), $lj->getPostId());
 					$ljPoster->addTagsToPost($lj->getPostId(), $lj->getTag());
 				} else {
-					if(strtotime('-10 day')>$lj->getPublicTimestamp()){
+					if(strtotime('-30 day')>$lj->getPublicTimestamp()){
 						$oldPostCount++;
 						if($oldPostCount>$oldPostMaxCount){
 							return true;
