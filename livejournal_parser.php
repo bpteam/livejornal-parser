@@ -46,8 +46,7 @@ function admin_parser_livejournal_page(){
 
 	echo '<h2>Сайты для парсинга</h2>';
 	if($_REQUEST['parsing'] == 'start'){
-		set_time_limit(0);
-		echo '<h1>Выполняется парсинг, пожалуйста подождите...</h1>';
+		echo '<h2>Выполняется парсинг, пожалуйста подождите...</h2>';
 		ob_flush();
 		flush();
 		ob_flush();
@@ -55,13 +54,13 @@ function admin_parser_livejournal_page(){
 		foreach($blogs as $blog){
 			parsing_livejournal($blog['livejournal_url']);
 		}
+		echo '<br/><h1>Готово!</h1>';
 
 	}
 	if($_REQUEST['parsing'] == 'del'){
 		$wpdb->query('DELETE FROM ' . $wpdb->prefix . TABLE_LJ_PARSER . ' WHERE id='.$_REQUEST['id']);
 	}
-
-	echo '<h3>Добавить сайт для парсинга:</h3>';
+	echo '<br/><h3>Добавить сайт для парсинга:</h3>';
 	echo '<form method="POST" action="'.$_SERVER['PHP_SELF'].'?page=livejournal_parser&update=true">';
 	echo '<table>
 	             <tr>
@@ -101,10 +100,16 @@ function show_all_livejournal_blog(){
 	}
 }
 
-function parsing_livejournal($url){
+function parsing_livejournal($url, $update = false){
+	ini_set('display_errors', 0);
+	set_time_limit(86400);
 	$lj = new \Parser\cLiveJournal();
 	$ljPoster = new \Poster\cWordPressLocal();
+	$lj->curl->setSleepTime(700);
 	$lj->init($url);
+	$oldPostCount = 0;
+	$oldPostMaxCount = 5;
+	$oldUrl = array();
 	do{
 		$pageLinks = current($lj->curl->load($url));
 		$links = $lj->getLinks($pageLinks);
@@ -113,17 +118,32 @@ function parsing_livejournal($url){
 				$page = current($lj->curl->load($link));
 				$lj->parsArticle($page);
 				$ljPoster->addUser($lj->getJournal(),$lj->getJournal().'123456','Author', $lj->getAuthorId());
-				$post = $lj->getPost();
-				$ljPoster->downloadPictures($post);
-				$ljPoster->addPost($lj->getTitle(), $post, $lj->getAuthorId(), array('post_date' => date('Y-m-d H:i:s',$lj->getPublicTimestamp())), $lj->getPostId());
-				$ljPoster->addTagsToPost($lj->getPostId(), $lj->getTag());
+				if(!$update || !post_exist($lj->getPostId())){
+					$post = $lj->getPost();
+					$ljPoster->downloadPictures($post);
+					$ljPoster->addPost($lj->getTitle(), $post, $lj->getAuthorId(), array('post_date' => date('Y-m-d H:i:s',$lj->getPublicTimestamp())), $lj->getPostId());
+					$ljPoster->addTagsToPost($lj->getPostId(), $lj->getTag());
+				} else {
+					if(strtotime('-30 day')>$lj->getPublicTimestamp()){
+						$oldPostCount++;
+						if($oldPostCount>$oldPostMaxCount){
+							return true;
+						}
+					}
+				}
 				$ljPoster->addCommentsToPost($lj->getPostId(), $lj->getComments());
-				sleep(1);
 			}
 		}
+		$oldUrl[] = $url;
 		$url = $lj->nextPage($pageLinks);
-	}while($url);
+	}while($url && !in_array($url,$oldUrl));
+	return true;
 }
+
+function post_exist($id){
+	return (bool)get_post($id);
+}
+
 
 add_action('admin_page', 'livejournal_add_admin_pages');
 add_action('admin_menu', 'livejournal_add_admin_menu');
